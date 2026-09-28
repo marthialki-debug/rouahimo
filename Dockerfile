@@ -9,8 +9,24 @@ RUN apt-get update \
  && docker-php-ext-install -j$(nproc) mysqli pdo pdo_mysql gd \
  && a2enmod rewrite headers \
  && rm -rf /var/lib/apt/lists/* \
- && mkdir -p /run/mysqld \
- && chown mysql:mysql /run/mysqld
+ && rm -rf /var/lib/mysql/* \
+ && mkdir -p /var/lib/mysql /run/mysqld \
+ && chown mysql:mysql /var/lib/mysql /run/mysqld
+
+# Low-memory MariaDB defaults for Render Free (~512MB)
+RUN mkdir -p /etc/mysql/mariadb.conf.d \
+ && printf '%s\n' \
+      '[mysqld]' \
+      'innodb_buffer_pool_size = 48M' \
+      'innodb_log_buffer_size = 4M' \
+      'key_buffer_size = 8M' \
+      'max_connections = 30' \
+      'table_open_cache = 64' \
+      'thread_cache_size = 8' \
+      'performance_schema = OFF' \
+      'skip_name_resolve' \
+      'bind-address = 127.0.0.1' \
+      > /etc/mysql/mariadb.conf.d/99-render-lowmem.cnf
 
 WORKDIR /var/www/html
 

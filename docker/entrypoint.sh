@@ -13,10 +13,10 @@ MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-rouahimo_root}"
 sed -i "s/^Listen .*/Listen ${PORT}/" /etc/apache2/ports.conf
 sed -i "s#<VirtualHost \*:.*>#<VirtualHost *:${PORT}>#" /etc/apache2/sites-available/000-default.conf
 
-mkdir -p /var/www/html/uploads /var/www/html/logos /run/mysqld
+mkdir -p /var/www/html/uploads /var/www/html/logos /run/mysqld /var/lib/mysql
 chown -R www-data:www-data /var/www/html/uploads /var/www/html/logos || true
 chmod -R 775 /var/www/html/uploads /var/www/html/logos || true
-chown mysql:mysql /run/mysqld
+chown mysql:mysql /run/mysqld /var/lib/mysql
 
 mysql_as_root() {
   if mysql -u root -e "SELECT 1" >/dev/null 2>&1; then
@@ -26,31 +26,69 @@ mysql_as_root() {
   fi
 }
 
+dump_mysqld_logs() {
+  echo "[rouahimo] --- /tmp/mysqld.err ---" >&2
+  cat /tmp/mysqld.err 2>/dev/null || echo "(pas de /tmp/mysqld.err)" >&2
+  echo "[rouahimo] --- /tmp/mysql_install.log ---" >&2
+  cat /tmp/mysql_install.log 2>/dev/null || echo "(pas de /tmp/mysql_install.log)" >&2
+}
+
 start_local_mariadb() {
-  echo "[rouahimo] Demarrage MariaDB local..."
+  echo "[rouahimo] Demarrage MariaDB local (low-mem Render Free)..."
+
+  mkdir -p /run/mysqld /var/lib/mysql
+  chown mysql:mysql /run/mysqld /var/lib/mysql
+
   if [ ! -d /var/lib/mysql/mysql ]; then
-    mysql_install_db --user=mysql --datadir=/var/lib/mysql --auth-root-authentication-method=normal >/tmp/mysql_install.log 2>&1 \
-      || mariadb-install-db --user=mysql --datadir=/var/lib/mysql --auth-root-authentication-method=normal >/tmp/mysql_install.log 2>&1
+    echo "[rouahimo] Premiere initialisation datadir (/var/lib/mysql)..."
+    if command -v mariadb-install-db >/dev/null 2>&1; then
+      mariadb-install-db --user=mysql --datadir=/var/lib/mysql --auth-root-authentication-method=normal >/tmp/mysql_install.log 2>&1 \
+        || { echo "[rouahimo] ERREUR: mariadb-install-db a echoue." >&2; dump_mysqld_logs; exit 1; }
+    else
+      mysql_install_db --user=mysql --datadir=/var/lib/mysql --auth-root-authentication-method=normal >/tmp/mysql_install.log 2>&1 \
+        || { echo "[rouahimo] ERREUR: mysql_install_db a echoue." >&2; dump_mysqld_logs; exit 1; }
+    fi
+    echo "[rouahimo] Install DB OK (voir /tmp/mysql_install.log)."
   fi
 
-  mysqld --user=mysql --datadir=/var/lib/mysql --bind-address=127.0.0.1 --port=3306 &
+  # Flags low-memory pour instance Render Free (~512MB)
+  mysqld \
+    --user=mysql \
+    --datadir=/var/lib/mysql \
+    --bind-address=127.0.0.1 \
+    --port=3306 \
+    --socket=/run/mysqld/mysqld.sock \
+    --pid-file=/run/mysqld/mysqld.pid \
+    --log-error=/tmp/mysqld.err \
+    --innodb-buffer-pool-size=48M \
+    --innodb-log-buffer-size=4M \
+    --key-buffer-size=8M \
+    --max-connections=30 \
+    --table-open-cache=64 \
+    --thread-cache-size=8 \
+    --performance-schema=OFF \
+    --skip-name-resolve \
+    &
   MYSQL_PID=$!
 
-  echo "[rouahimo] Attente MariaDB..."
+  echo "[rouahimo] Attente MariaDB (pid=${MYSQL_PID})..."
   for i in $(seq 1 90); do
-    if mysqladmin ping -h127.0.0.1 --silent 2>/dev/null; then
+    if mysqladmin --socket=/run/mysqld/mysqld.sock ping --silent 2>/dev/null \
+       || mysqladmin ping -h127.0.0.1 --silent 2>/dev/null; then
       break
     fi
     if ! kill -0 "$MYSQL_PID" 2>/dev/null; then
       echo "[rouahimo] ERREUR: mysqld est mort au demarrage." >&2
-      tail -n 80 /tmp/mysql_install.log 2>/dev/null || true
+      dump_mysqld_logs
       exit 1
     fi
     sleep 1
   done
 
-  if ! mysqladmin ping -h127.0.0.1 --silent 2>/dev/null; then
+  if ! mysqladmin --socket=/run/mysqld/mysqld.sock ping --silent 2>/dev/null \
+     && ! mysqladmin ping -h127.0.0.1 --silent 2>/dev/null; then
     echo "[rouahimo] ERREUR: MariaDB ne repond pas." >&2
+    dump_mysqld_logs
     exit 1
   fi
 
