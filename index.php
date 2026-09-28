@@ -5,7 +5,7 @@ if ($sess === '' || !is_dir($sess) || !is_writable($sess)) {
     session_save_path(sys_get_temp_dir());
 }
 session_start();
-$cfg = require __DIR__ . '/config.php';
+$cfg = require __DIR__ . '/bootstrap_config.php';
 
 function h(?string $s): string { return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8'); }
 function fcfa(float $n): string { return number_format($n, 0, ',', ' ') . ' F'; }

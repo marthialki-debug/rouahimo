@@ -1,0 +1,15 @@
+.git
+.gitignore
+config.php
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+LISEZMOI.txt
+uploads/*
+!uploads/.gitkeep
+logos/*
+!logos/.gitkeep

@@ -1,0 +1,81 @@
+ROUAHIMO - Deploiement sur Render.com (demo partagee)
+=====================================================
+
+Principe
+--------
+Un seul Web Service Docker sur Render :
+  - PHP 8.2 + Apache
+  - MariaDB dans le meme conteneur
+  - Import automatique de sql/rouahimo.sql au premier demarrage
+  - Pas besoin de config.php (variables d'environnement ou valeurs par defaut)
+
+ATTENTION (tier gratuit)
+------------------------
+- Le service s'endort apres inactivite (~15 min). Le premier acces peut
+  prendre 30-60 secondes (cold start).
+- Sans disque persistant, les donnees MariaDB sont perdues a chaque
+  redemarrage "froid" / rebuild : le script reimporte alors le dump demo.
+- Pour une vraie production : Web Service PHP + MySQL externe (Aiven,
+  Railway, ou service MySQL prive Render) et disque persistant.
+
+Etapes exactes dans l'interface Render
+--------------------------------------
+
+1) Compte
+   - Allez sur https://render.com
+   - "Get Started" / Sign up with GitHub
+   - Autorisez l'acces a l'organisation / compte marthialki-debug
+   - Acceptez le plan Free si propose
+
+2) Nouveau Web Service
+   - Dashboard -> New + -> Web Service
+   - Connectez le depot GitHub : marthialki-debug/rouahimo
+     (si absent : Configure account -> autoriser le repo)
+   - Selectionnez le depot rouahimo, branche main
+
+3) Reglages du service
+   - Name : rouahimo (ou autre)
+   - Language / Runtime : Docker
+     (Render detecte le Dockerfile a la racine)
+   - Branch : main
+   - Region : au choix (ex. Frankfurt / Oregon)
+   - Instance type : Free
+   - Health check path (optionnel) : / ou laisser vide
+
+4) Variables d'environnement (optionnel pour la demo)
+   Par defaut le conteneur utilise deja :
+     DB_HOST=127.0.0.1
+     DB_PORT=3306
+     DB_NAME=rouahimo
+     DB_USER=rouahimo
+     DB_PASS=rouahimo
+   Vous pouvez les laisser vides pour la demo "tout-en-un".
+   Si vous branchez un MySQL externe plus tard, definissez ces 5 cles
+   (et DB_HOST ne doit plus etre 127.0.0.1).
+
+5) Deploy
+   - Cliquez Create Web Service
+   - Attendez le build Docker (plusieurs minutes la premiere fois)
+   - Dans les logs : cherchez "[rouahimo] Import sql/rouahimo.sql"
+     puis "[rouahimo] Apache sur le port ..."
+
+6) URL
+   - Forme : https://rouahimo-XXXX.onrender.com
+     (XXXX = suffixe genere par Render, ou nom choisi)
+   - Ouvrez l'URL -> ecran d'accueil ROUAHIMO
+   - Connexion demo : superviseur / Super@2026
+     (autres comptes : voir LISEZMOI.txt / sql/rouahimo.sql)
+
+Wamp local (inchange)
+---------------------
+- Conservez config.php (non versionne) pour 127.0.0.1 / root
+- bootstrap_config.php charge config.php si DB_HOST n'est pas defini
+- Aucun changement necessaire pour continuer a travailler en local
+
+Option MySQL externe (plus tard)
+--------------------------------
+Render n'offre plus de MySQL managé simple partout ; alternatives :
+  - MySQL en Private Service Docker sur Render (payant + disque)
+  - Aiven.io MySQL free trial / Railway MySQL
+Puis definissez DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS sur le
+Web Service et importez sql/rouahimo.sql une fois dans cette base.
