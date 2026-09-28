@@ -1,0 +1,67 @@
+ROUAHIMO — installation WampServer
+==================================
+
+1. Copiez le dossier « rouahimo » dans C:\wamp64\www\
+2. Démarrez WampServer (icône verte).
+3. phpMyAdmin → Importer → sql/rouahimo.sql
+   Ce seul script crée la base rouahimo (28 tables).
+4. config.php pointe vers 127.0.0.1, port 3306, base rouahimo,
+   utilisateur root, mot de passe vide.
+5. Ouvrez http://localhost/rouahimo/
+   Aucun accès Internet n'est nécessaire (pas de CDN).
+   L'écran d'arrivée propose Commencer (catalogue public) puis Se connecter.
+   Sur ordinateur les 5 boutons sont à gauche ; sur téléphone, en bas.
+
+Connexion
+---------
+Le mot de passe est vérifié avec password_verify() sur le hash bcrypt
+de utilisateurs.mdp. Le PHP ne contient pas de liste de mots de passe en clair.
+
+Comptes de démonstration
+superviseur / Super@2026     toutes les agences (Adjamé, Cocody, Toutes)
+admin       / Admin@2026
+gerant_adj  / GerantAdj@2026 Agence Adjamé
+gerant_coc  / GerantCoc@2026 Agence Cocody
+comptable   / Compta@2026
+caissier    / Caisse@2026
+assistant   / Assist@2026
+proprio     / Proprio@2026
+locataire   / Locat@2026
+sansrole    / SansRole@2026  → Accès refusé
+
+Reçus
+-----
+Les encaissements créent un reçu RC-2026-XXXX. Un reçu n'est jamais
+supprimé : l'annulation enregistre un second reçu de type annulation.
+Les nouvelles photos déposées sur un bien sont enregistrées dans uploads/.
+
+Tests rapides — reçu et CNI
+---------------------------
+- Caisse → Nouvel encaissement : le reçu s'ouvre. Imprimer ouvre la boîte
+  d'impression (Chrome ou Edge). PDF : même boîte, « Enregistrer au format PDF ».
+  WhatsApp préremplit le n° RC-2026, le locataire, le montant et la période.
+- Caisse → Reçus → Imprimer : la page affiche DUPLICATA.
+- Locataires → Nouveau : le n° CNI est obligatoire. Recto (et verso) vont
+  dans uploads/. La fiche et la liste montrent le numéro et la miniature.
+Superviseur (superviseur / Super@2026)
+- Accueil : 4 cartes (encaissements, impayés, occupation, caisses ouvertes),
+  3 boutons, courbe mensuelle. Les 5 menus restent Accueil, Locataires,
+  Propriétaires, Caisse, Paramètres.
+- Caisse : Ouverture, Nouvel encaissement, Décaissement, Reçus, Rapport.
+  Reçus n'est pas un 6e menu.
+- Nouvel encaissement en Orange Money sans référence : refusé.
+  Avec référence : reçu RC-2026, impression / WhatsApp / e-mail.
+- Réouvrir un reçu : mention DUPLICATA. Annuler crée un second reçu,
+  l'original reste.
+- Locataires (sous-pages, pas un 6e menu) : Contrats (durée, dates,
+  fréquence, caution, avance, préavis, statut), Échéancier lié aux reçus,
+  États des lieux. Le raccourci Accueil « Impayés » ouvre le filtre Impayés.
+- Propriétaires : Mandats et commission, Reversements (brut, commission,
+  dépenses, net), relevé mensuel imprimable, bordereau / reçu de
+  reversement, dépenses sur le bien.
+
+Caissier (caissier / Caisse@2026, Agence Adjamé)
+- Accueil visible. Encaisser un loyer ouvre Nouvel encaissement.
+- Propriétaires et Paramètres restent grisés (Accès refusé + Retour).
+- Même règle de référence hors espèces. Le reçu ne se supprime pas.
+

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 84" role="img" aria-label="ROUAHIMO">
+  <rect x="2" y="8" width="68" height="68" rx="16" fill="#E8650A"/>
+  <path fill="#FFF1E6" d="M12 40 36 20l24 20v3H12z"/>
+  <path fill="#fff" d="M18 44h36v22H18z"/>
+  <path fill="#E8650A" d="M32 52h8v14h-8z"/>
+  <circle cx="48" cy="56" r="2.2" fill="#C2540A"/>
+  <text x="86" y="54" fill="#1F2937" font-family="Poppins, Segoe UI, sans-serif" font-size="32" font-weight="700" letter-spacing="1.5">ROUAHIMO</text>
+</svg>

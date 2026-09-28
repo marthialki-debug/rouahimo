@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ROUAHIMO">
+  <rect width="32" height="32" rx="8" fill="#E8650A"/>
+  <path fill="#FFF1E6" d="M6 14.2 16 6.2l10 8v1.6H6z"/>
+  <path fill="#fff" d="M8.5 16.2h15v9.2h-15z"/>
+  <path fill="#E8650A" d="M14.2 19.2h3.6v6.2h-3.6z"/>
+  <circle cx="22.4" cy="21.2" r="1.1" fill="#C2540A"/>
+</svg>
